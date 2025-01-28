@@ -5,6 +5,7 @@ import DBConnect from "./db/index.js";
 import express from "express";
 import { asyncHandler } from "./utils/asyncHandler.js";
 import { ApiError } from "./utils/ApiError.js";
+import { app } from "./app.js";
 
 // console.log("APi Error", ApiError.statusCode);
 
@@ -13,22 +14,22 @@ dotenv.config({
 });
 // console.log(process.env.MONGODB_URL);
 
-const app = express();
+// const app = express();
 
-DBConnect();
+// DBConnect();
 
-// (async () => {
-//   try {
-//     await mongoose.connect(`${process.env.MONGODB_URL}/${db_name}`);
+(async () => {
+  try {
+    await mongoose.connect(`${process.env.MONGODB_URL}/${db_name}`);
 
-//     console.log("DB is connected");
-//     app.listen(process.env.PORT, () => {
-//       console.log(`Server is running on port ${process.env.PORT}`);
-//     });
-//   } catch (error) {
-//     console.log("Error in connecting DB", error);
-//   }
-// })();
+    console.log("DB is connected");
+    app.listen(process.env.PORT, () => {
+      console.log(`Server is running on port ${process.env.PORT}`);
+    });
+  } catch (error) {
+    console.log("Error in connecting DB", error);
+  }
+})();
 
 // async function DBConnection() {
 //   try {
