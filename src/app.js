@@ -8,6 +8,10 @@ const app = express();
 //     credentials: true,
 // }));
 
+app.use(express.json());
+
+app.use(express.urlencoded({ extended: true }));
+
 //Routes
 
 import userRouter from "./routes/user.routes.js";
