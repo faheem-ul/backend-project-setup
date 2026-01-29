@@ -223,4 +223,40 @@ const generateNewAccessToken = asyncHandler(async (req, res) => {
     );
 });
 
-export { registerUser, loginUser, logoutUser, generateNewAccessToken };
+const updateUserPassword = asyncHandler(async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
+
+    if (!email && !newPassword) {
+      throw new ApiError(400, "Email and new password fields are required");
+    }
+
+    // find the user in the db
+    const user = await User.findOne({ email });
+
+    // console.log("user found for password update", user);
+
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
+    //  update password field in db
+
+    user.password = newPassword;
+    await user.save();
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, user, "Password updated successfully"));
+  } catch (error) {
+    console.error("Error updating password:", error.message);
+    throw new ApiError(500, "Error updating password");
+  }
+});
+
+export {
+  registerUser,
+  loginUser,
+  logoutUser,
+  generateNewAccessToken,
+  updateUserPassword,
+};
