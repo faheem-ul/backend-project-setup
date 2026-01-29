@@ -22,7 +22,7 @@ const userSchema = new Schema(
 
   {
     timestamps: true,
-  }
+  },
 );
 
 //Hashing the password before saving it in the database using mongoose Hook
@@ -41,32 +41,43 @@ userSchema.methods.isPasswordCorrect = async function (password) {
 
 //Generate Token
 userSchema.methods.generateAcessToken = function () {
-  return jwt.sign(
-    {
-      id: this._id, //_id is the id of the datbase.
-      username: this.username,
-      email: this.email,
-    },
-    process.env.ACCESS_TOKEN_SECRET,
-    {
-      expiresIn: ACCESS_TOKEN_EXPIRY,
-    }
-  );
+  try {
+    // console.log("access token expirey", pro)
+    return jwt.sign(
+      {
+        id: this._id, //_id is the id of the datbase.
+        username: this.username,
+        email: this.email,
+      },
+      process.env.ACCESS_TOKEN_SECRET,
+      {
+        expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
+      },
+    );
+  } catch (error) {
+    console.error("Error generating access token", error);
+    throw new ApiError(500, "Error generating access token");
+  }
 };
 
 //Refresh Token
 userSchema.methods.generateRefreshToken = function () {
-  return jwt.sign(
-    {
-      id: this._id, //_id is the id of the datbase.
-      username: this.username,
-      email: this.email,
-    },
-    process.env.REFRESH_TOKEN_SECRET,
-    {
-      expiresIn: REFRESH_TOKEN_EXPIRY,
-    }
-  );
+  try {
+    return jwt.sign(
+      {
+        id: this._id, //_id is the id of the datbase.
+        username: this.username,
+        email: this.email,
+      },
+      process.env.REFRESH_TOKEN_SECRET,
+      {
+        expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
+      },
+    );
+  } catch (error) {
+    console.error("Error generating refresh token", error);
+    throw new ApiError(500, "Error generating refresh token");
+  }
 };
 
 export const User = mongoose.model("User", userSchema);

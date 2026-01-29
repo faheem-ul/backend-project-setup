@@ -9,16 +9,17 @@ cloudinary.config({
 });
 
 // console.log("API secret", process.env.CLOUD_API_SECRET);
+// console.log("Cloud name", process.env.CLOUD_NAME);
 
 const UploadFileonCloudinary = async (fileFromUser) => {
   try {
     if (!fileFromUser) return;
     //uploading the file
-    // console.log("file from user", fileFromUser);
+    console.log("file from user", fileFromUser);
     const uploadResult = await cloudinary.uploader.upload(fileFromUser, {
       resource_type: "auto",
     });
-    // console.log("upload result", uploadResult.url);
+    console.log("upload result", uploadResult.url);
     fs.unlinkSync(fileFromUser);
     return (
       // console.log("File uploaded successfully", uploadResult)
