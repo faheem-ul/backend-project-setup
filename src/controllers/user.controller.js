@@ -1,3 +1,5 @@
+import jwt from "jsonwebtoken";
+
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
@@ -163,4 +165,62 @@ const logoutUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, null, "User logged out successfully"));
 });
 
-export { registerUser, loginUser, logoutUser };
+const generateNewAccessToken = asyncHandler(async (req, res) => {
+  //get the old refresh token from the cookies
+
+  const refreshTokenComingFromCookie =
+    req.cookies?.refreshToken ||
+    req.header("Authorization")?.replace("Bearer ", "");
+
+  if (!refreshTokenComingFromCookie) {
+    throw new ApiError(401, "Refresh token is missing");
+  }
+
+  //decrypt that token and get the id or username or email from that
+
+  const decodedTokenComingFromCookie = jwt.verify(
+    refreshTokenComingFromCookie,
+    process.env.REFRESH_TOKEN_SECRET,
+  );
+
+  //on the basis of what extracted from the decrypted token find the user in the database
+
+  const user = await User.findById(decodedTokenComingFromCookie?.id);
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  // compare the token coming from the cookies with the token present in db
+
+  if (user.refreshToken !== refreshTokenComingFromCookie) {
+    throw new ApiError(401, "Invalid refresh token");
+  }
+
+  // if comaprison is successful then generate new access token and send it to the user
+
+  const { accessToken, refreshToken } = await generateAcessandRefreshToken(
+    user._id,
+  );
+
+  //send the new access token to the user
+  return res
+    .status(200)
+    .cookie("accessToken", accessToken, {
+      httpOnly: true,
+      secure: true,
+    })
+    .cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: true,
+    })
+    .json(
+      new ApiResponse(
+        200,
+        { accessToken },
+        "New access token generated successfully",
+      ),
+    );
+});
+
+export { registerUser, loginUser, logoutUser, generateNewAccessToken };
