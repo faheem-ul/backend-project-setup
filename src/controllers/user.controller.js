@@ -273,6 +273,31 @@ const getCurrentUserProfile = asyncHandler(async (req, res) => {
     );
 });
 
+const updateUserAvatar = asyncHandler(async (req, res) => {
+  const avatarTempPath = req.file?.path;
+
+  if (!avatarTempPath) {
+    throw new ApiError(400, "Avatar file is required");
+  }
+  const updatedAvatar = await UploadFileonCloudinary(avatarTempPath);
+
+  if (!updatedAvatar) {
+    throw new ApiError(500, "Error uploading avatar to cloudinary");
+  }
+
+  await User.findByIdAndUpdate(
+    req.user._id,
+    { avatar: updatedAvatar.url },
+    { new: true },
+  ).select("-password -refreshToken");
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, updatedAvatar.url, "Avatar updated successfully"),
+    );
+});
+
 export {
   registerUser,
   loginUser,
@@ -280,4 +305,5 @@ export {
   generateNewAccessToken,
   updateUserPassword,
   getCurrentUserProfile,
+  updateUserAvatar,
 };
