@@ -60,13 +60,27 @@ const registerUser = asyncHandler(async (req, res) => {
   //creating the object in database
   // console.log("avatar url from cloudinary", avatar);
   // console.log(avatar);
+
+  //get the vover image url from cloudinary
+  const coverImageLocalPath = req.files?.coverImage?.[0]?.path;
+  console.log("coverImageLocalPath", coverImageLocalPath);
+
+  if (!coverImageLocalPath) {
+    throw new ApiError(400, "Cover Image is required");
+  }
+
+  const coverImage = await UploadFileonCloudinary(coverImageLocalPath);
+  if (!coverImage) {
+    throw new ApiError(500, "Error uploading cover image to cloudinary");
+  }
+
   const userinDatabase = await User.create({
     username: username.toLowerCase(),
     fullname,
     email,
     password,
     avatar: avatar.url,
-    coverImage: "",
+    coverImage: coverImage.url,
   });
   const CreatedUserId = await User.findById(userinDatabase._id).select(
     "-password -refreshToken",
