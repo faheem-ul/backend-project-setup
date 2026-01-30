@@ -5,6 +5,7 @@ import {
   logoutUser,
   generateNewAccessToken,
   updateUserPassword,
+  getCurrentUserProfile,
 } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJwt } from "../middlewares/auth.middleware.js";
@@ -27,6 +28,7 @@ router.route("/register").post(
 
 router.route("/login").post(loginUser);
 router.route("/update-password").post(updateUserPassword);
+router.route("/current-profile").get(verifyJwt, getCurrentUserProfile);
 
 //secured routes
 router.route("/logout").post(verifyJwt, logoutUser);

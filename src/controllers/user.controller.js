@@ -242,15 +242,35 @@ const updateUserPassword = asyncHandler(async (req, res) => {
     //  update password field in db
 
     user.password = newPassword;
-    await user.save();
+    await user.save({
+      validateBeforeSave: false,
+    });
 
     return res
       .status(200)
-      .json(new ApiResponse(200, user, "Password updated successfully"));
+      .json(new ApiResponse(200, null, "Password updated successfully"));
   } catch (error) {
     console.error("Error updating password:", error.message);
     throw new ApiError(500, "Error updating password");
   }
+});
+
+const getCurrentUserProfile = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+
+  // console.log("user in get current profile", user);
+
+  const user = await User.findById(userId).select("-password -refreshToken");
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, user, "Current user profile fetched successfully"),
+    );
 });
 
 export {
@@ -259,4 +279,5 @@ export {
   logoutUser,
   generateNewAccessToken,
   updateUserPassword,
+  getCurrentUserProfile,
 };
