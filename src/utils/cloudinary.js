@@ -8,9 +8,6 @@ cloudinary.config({
   api_secret: process.env.CLOUD_API_SECRET,
 });
 
-// console.log("API secret", process.env.CLOUD_API_SECRET);
-// console.log("Cloud name", process.env.CLOUD_NAME);
-
 const UploadFileonCloudinary = async (fileFromUser) => {
   try {
     if (!fileFromUser) return;
@@ -19,7 +16,7 @@ const UploadFileonCloudinary = async (fileFromUser) => {
     const uploadResult = await cloudinary.uploader.upload(fileFromUser, {
       resource_type: "auto",
     });
-    console.log("upload result", uploadResult.url);
+    // console.log("upload result", uploadResult.url);
     fs.unlinkSync(fileFromUser);
     return (
       // console.log("File uploaded successfully", uploadResult)
@@ -32,4 +29,17 @@ const UploadFileonCloudinary = async (fileFromUser) => {
   }
 };
 
-export { UploadFileonCloudinary };
+const deleteFilefromCloudinary = async (imageTobeDeletedId) => {
+  try {
+    if (!imageTobeDeletedId) {
+      throw new ApiError(400, "Image ID is required");
+    }
+    const deleteResult = await cloudinary.uploader.destroy(imageTobeDeletedId);
+    // console.log("Delete result from cloudinary", deleteResult);
+    return deleteResult;
+  } catch (error) {
+    throw new ApiError(500, "Error deleting file from cloudinary");
+  }
+};
+
+export { UploadFileonCloudinary, deleteFilefromCloudinary };

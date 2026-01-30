@@ -3,7 +3,10 @@ import jwt from "jsonwebtoken";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
-import { UploadFileonCloudinary } from "../utils/cloudinary.js";
+import {
+  UploadFileonCloudinary,
+  deleteFilefromCloudinary,
+} from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 
 const generateAcessandRefreshToken = async (userId) => {
@@ -63,7 +66,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
   //get the vover image url from cloudinary
   const coverImageLocalPath = req.files?.coverImage?.[0]?.path;
-  console.log("coverImageLocalPath", coverImageLocalPath);
+  // console.log("coverImageLocalPath", coverImageLocalPath);
 
   if (!coverImageLocalPath) {
     throw new ApiError(400, "Cover Image is required");
@@ -288,28 +291,51 @@ const getCurrentUserProfile = asyncHandler(async (req, res) => {
 });
 
 const updateUserAvatar = asyncHandler(async (req, res) => {
-  const avatarTempPath = req.file?.path;
+  //get the already present avatar from the db
 
-  if (!avatarTempPath) {
-    throw new ApiError(400, "Avatar file is required");
+  try {
+    const avatarInDb = req.user.avatar;
+
+    if (!avatarInDb) {
+      throw new ApiError(404, "User avatar not found in database");
+    }
+
+    const avtarIdTobeDeleted = avatarInDb.split("/").pop().split(".")[0];
+
+    //upload the new avatar to cloudinary
+
+    const avatarTempPath = req.file?.path;
+
+    if (!avatarTempPath) {
+      throw new ApiError(400, "Avatar file is required");
+    }
+    const updatedAvatar = await UploadFileonCloudinary(avatarTempPath);
+
+    if (!updatedAvatar) {
+      throw new ApiError(500, "Error uploading avatar to cloudinary");
+    }
+
+    await User.findByIdAndUpdate(
+      req.user._id,
+      { avatar: updatedAvatar.url },
+      { new: true },
+    ).select("-password -refreshToken");
+
+    //delete the old avatar from cloudinary
+    const deletedResult = await deleteFilefromCloudinary(avtarIdTobeDeleted);
+
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          { url: updatedAvatar.url, deletedResult: deletedResult },
+          "Avatar updated successfully",
+        ),
+      );
+  } catch (error) {
+    throw new ApiError(500, "Error updating avatar");
   }
-  const updatedAvatar = await UploadFileonCloudinary(avatarTempPath);
-
-  if (!updatedAvatar) {
-    throw new ApiError(500, "Error uploading avatar to cloudinary");
-  }
-
-  await User.findByIdAndUpdate(
-    req.user._id,
-    { avatar: updatedAvatar.url },
-    { new: true },
-  ).select("-password -refreshToken");
-
-  return res
-    .status(200)
-    .json(
-      new ApiResponse(200, updatedAvatar.url, "Avatar updated successfully"),
-    );
 });
 
 export {
